@@ -6,7 +6,7 @@ import {LoadMoreButton} from './Gallery.styled';
 import Modal from './Modal/Modal';
 import Loader from './Loader/Loader.jsx';
 
-
+import { Api } from '../services/Api'
 
 
 
@@ -29,7 +29,7 @@ class ImageFinder extends React.Component {
     }
 
     toggleModal = () => {
-        this.setState({showModal: !this.state.showModal})/////
+        this.setState({showModal: !this.state.showModal})
     }
 
 
@@ -40,21 +40,30 @@ class ImageFinder extends React.Component {
     }
 
 
-    fetchImages = () => {
-        this.setState({load: true})
+    fetchImages = async () => {
+        
         const { images, filter, page, perPage,} = this.state
-        const API_KEY = '24504393-335e93f8f8ae51e578d8e0bea'
-        fetch(`https://pixabay.com//api/?q=${filter}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=${perPage}`)
-        .then(res => res.json())
-        .then(obj => this.setState({images: [...images, ...obj.hits], total: obj.totalHits }))
-        .catch("error")
-        .finally(this.setState({load: false})) 
+
+        try{
+            this.setState({load: true})
+            const {hits, total, totalHits} = await Api(filter, page)
+
+            if (total) {
+                return this.setState({ images: [...images, ...hits], totalHits: totalHits, page: page + 1 }) 
+            } alert( `Invalid request - ${filter}. Try again`)
+
+        }catch (error) {
+            alert( error)
+        } finally {
+            this.setState({ loading: false })
+        }
+
         
     }
 
 
     componentDidUpdate(prevPropes, prevState) {
-        if (prevState.filter !== this.state.filter || prevState.page !== this.state.page) {
+        if (prevState.filter !== this.state.filter) {
         this.fetchImages()
         }
     }
