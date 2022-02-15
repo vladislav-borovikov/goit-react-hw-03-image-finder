@@ -19,7 +19,8 @@ class ImageFinder extends React.Component {
         total: 0,
         showModal: false,
         imgUrl: '',
-        load: false
+        load: false,
+        totalHits: 0
     }
 
    
@@ -42,20 +43,33 @@ class ImageFinder extends React.Component {
 
     fetchImages = async () => {
         
-        const { images, filter, page, perPage,} = this.state
+        const { filter, page} = this.state
 
         try{
             this.setState({load: true})
             const {hits, total, totalHits} = await Api(filter, page)
 
-            if (total) {
-                return this.setState({ images: [...images, ...hits], totalHits: totalHits, page: page + 1 }) 
-            } alert( `Invalid request - ${filter}. Try again`)
+             if (hits.length === 0) {
+                return Promise.reject(
+                    new Error(alert(`Invalid request - ${filter}. Try again`)))
+                  }
+       
+            //     return this.setState({ images: [images, ...hits], totalHits: totalHits }) 
+            // } alert( `Invalid request - ${filter}. Try again`)
+            this.setState(prevState => {
+                return {
+                    images: [...prevState.images, ...hits],
+                    totalHits,
+                    total,
+               };
+              }
+             );
+    
 
         }catch (error) {
-            alert( error)
+            alert(error)
         } finally {
-            this.setState({ loading: false })
+            this.setState({ load: false })
         }
 
         
@@ -64,9 +78,20 @@ class ImageFinder extends React.Component {
 
     componentDidUpdate(prevPropes, prevState) {
         if (prevState.filter !== this.state.filter) {
-        this.fetchImages()
+            this.setState({ page: 1, images: [] })
         }
-    }
+        if ((prevState.filter !== this.state.filter  && this.state.page === 1) || prevState.page !== this.state.page) {
+            this.fetchImages()
+            }
+        
+        // if (prevPropes.filter !== this.props.filter) {
+        //     this.setState({ page: 1, images: [] })
+        // } if ((prevPropes.filter !== this.props.filter && this.state.page === 1) || prevState.page !== this.state.page){
+        //     this.setState({load: true});
+        //     this.fetchImages()
+        // }     
+        }
+    
     
 
 
